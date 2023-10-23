@@ -16,18 +16,35 @@ class PacProblem(Problem):
         self.game: Game = game
 
     def initial_state(self) -> int:
-        return 0
+        return self.game.pac_loc
 
     def actions(self, state: int) -> List[int]:
         return [0,1,2,3]
 
     def result(self, state: int, action: int) -> int:
-        return 0
+        return self.game.get_neighbor(state, action)
 
     def is_goal(self, state: int) -> bool:
-        return True
+        active_pills = self.game.get_active_pills_nodes()
+        active_power_pills = self.game.get_active_power_pills_nodes()
+        ghost_locs = self.game.ghost_locs
+        fruit = self.game.fruit_loc
+        targets = active_pills + active_power_pills
+        if (fruit != -1): targets += [fruit]
+        if self.game.eating_time > 2:
+            for g in range(self.game.NUM_GHOSTS):
+                if (self.game.is_edible(g)): targets += [ghost_locs[g]]
+        nearest = self.game.get_target(self.game.pac_loc, targets, True, DM.PATH)
+        if state == nearest: return True
+        return False
 
     def cost(self, state: int, action: int) -> float:
+        loc =  self.game.get_neighbor(state, action)
+        ghost_locations = self.game.ghost_locs
+        distances = [self.game.get_path_distance(X, loc) for X in ghost_locations]
+        for d in distances:
+            if d < 3 and self.game.eating_time < 2: 
+                return 100
         return 1
 
 
